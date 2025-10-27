@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 
 def torch_gather(x, idx, dim):
-    """Custom gather that matches TensorFlow broadcasting behavior"""
     idx_expanded = idx.expand(*x.shape[:-1], idx.shape[-1])
     return torch.gather(x, dim, idx_expanded)
 
@@ -22,15 +21,14 @@ class FSEncoder(nn.Module):
         self.linear2 = nn.Linear(encoder_output_channels, encoder_output_channels)
 
     def forward(self, x, sizes):
-        # x: (batch, n, channels) or (batch, channels, n)
         if x.shape[1] != self.conv1.in_channels:
-            x = x.transpose(1, 2)  # make it (batch, channels, n)
+            x = x.transpose(1, 2) 
 
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))
         x = F.leaky_relu(self.conv3(x))
 
-        x = x.transpose(1, 2)  # (batch, n, channels) -> (batch, channels, n)
+        x = x.transpose(1, 2)  
         x, perm = self.pool(x, sizes)
 
         x = F.leaky_relu(self.linear1(x))
@@ -40,10 +38,6 @@ class FSEncoder(nn.Module):
 
 
 class FSPool(nn.Module):
-    """
-    Featurewise sort pooling (FSPool) — PyTorch version.
-    Reference: 'FSPool: Learning Set Representations with Featurewise Sort Pooling'
-    """
 
     def __init__(self, in_channels, n_pieces, relaxed=False):
         super(FSPool, self).__init__()
@@ -52,11 +46,7 @@ class FSPool(nn.Module):
         self.weight = nn.Parameter(torch.randn(in_channels, n_pieces + 1))
 
     def forward(self, x, n=None):
-        """
-        x: (batch, in_channels, set_size)
-        n: (batch,) — number of elements per set
-        Returns: pooled features and permutation indices
-        """
+        
         assert x.shape[1] == self.weight.shape[0], "Incorrect number of input channels in weight"
 
         if n is None:
@@ -67,7 +57,6 @@ class FSPool(nn.Module):
 
         weight = self.determine_weight(sizes)
 
-        # Mask elements and sort descending
         x = x + (1 - mask) * -99999
         if self.relaxed:
             sorted_x, perm = cont_sort(x, temp=self.relaxed)
@@ -78,15 +67,13 @@ class FSPool(nn.Module):
         return x, perm
 
     def determine_weight(self, sizes):
-        """
-        Piecewise linear function evaluating f at the ratios in sizes.
-        """
+        
         batch_size = sizes.size(0)
         in_channels, _ = self.weight.shape
 
         weight = self.weight.unsqueeze(0).expand(batch_size, in_channels, -1)
 
-        # linspace [0, 1] → [0, n_pieces]
+       
         index = self.n_pieces * sizes
         index = index.unsqueeze(1).expand(batch_size, in_channels, -1)
 
@@ -104,10 +91,7 @@ class FSPool(nn.Module):
 
 
 def fill_sizes(sizes, x=None):
-    """
-    sizes: (batch,)
-    Returns ratios tensor and mask tensor
-    """
+    
     if x is not None:
         max_size = x.size(2)
     else:
@@ -124,11 +108,7 @@ def fill_sizes(sizes, x=None):
 
 
 def deterministic_sort(s, tau):
-    """
-    Continuous relaxation of sorting.
-    s: (batch, n, 1)
-    tau: temperature
-    """
+    
     n = s.size(1)
     one = torch.ones((n, 1), device=s.device)
     A_s = torch.abs(s - s.transpose(1, 2))
@@ -142,9 +122,7 @@ def deterministic_sort(s, tau):
 
 
 def cont_sort(x, perm=None, temp=1):
-    """
-    Continuous sort for (batch, channels, n).
-    """
+    
     original_size = x.size()
     x_flat = x.view(-1, x.size(2), 1)
 
