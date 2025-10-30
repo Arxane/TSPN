@@ -67,7 +67,7 @@ class PointwiseFeedForward(nn.Module):
 
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, n_heads):
-        super(EncoderLayer).__init__()
+        super(EncoderLayer, self).__init__()
         self.mha = MultiHeadAttention(d_model, n_heads)
         self.ffn = PointwiseFeedForward(d_model)
         self.ln1 = nn.LayerNorm(d_model, eps=1e-6)
