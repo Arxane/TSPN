@@ -1,0 +1,2 @@
+# Ignore dataset files (do not push raw/large data)
+/data/

@@ -22,7 +22,7 @@ class FSEncoder(nn.Module):
 
     def forward(self, x, sizes):
         if x.shape[1] != self.conv1.in_channels:
-            x = x.transpose(1, 2) 
+            x = x.transpose(1, 2)  
 
         x = F.leaky_relu(self.conv1(x))
         x = F.leaky_relu(self.conv2(x))
@@ -38,7 +38,6 @@ class FSEncoder(nn.Module):
 
 
 class FSPool(nn.Module):
-
     def __init__(self, in_channels, n_pieces, relaxed=False):
         super(FSPool, self).__init__()
         self.n_pieces = n_pieces
@@ -46,7 +45,6 @@ class FSPool(nn.Module):
         self.weight = nn.Parameter(torch.randn(in_channels, n_pieces + 1))
 
     def forward(self, x, n=None):
-        
         assert x.shape[1] == self.weight.shape[0], "Incorrect number of input channels in weight"
 
         if n is None:
@@ -67,13 +65,11 @@ class FSPool(nn.Module):
         return x, perm
 
     def determine_weight(self, sizes):
-        
         batch_size = sizes.size(0)
         in_channels, _ = self.weight.shape
 
         weight = self.weight.unsqueeze(0).expand(batch_size, in_channels, -1)
 
-       
         index = self.n_pieces * sizes
         index = index.unsqueeze(1).expand(batch_size, in_channels, -1)
 
@@ -91,7 +87,6 @@ class FSPool(nn.Module):
 
 
 def fill_sizes(sizes, x=None):
-    
     if x is not None:
         max_size = x.size(2)
     else:
@@ -108,7 +103,6 @@ def fill_sizes(sizes, x=None):
 
 
 def deterministic_sort(s, tau):
-    
     n = s.size(1)
     one = torch.ones((n, 1), device=s.device)
     A_s = torch.abs(s - s.transpose(1, 2))
@@ -122,7 +116,6 @@ def deterministic_sort(s, tau):
 
 
 def cont_sort(x, perm=None, temp=1):
-    
     original_size = x.size()
     x_flat = x.view(-1, x.size(2), 1)
 
